@@ -6,7 +6,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class GenreRecyclerViewAdapter (private val genreList: List<GenreModel>) :
+class GenreRecyclerViewAdapter (private val genreList: List<GenreModel>,
+private val listener :OnItemClickListener) :
     RecyclerView.Adapter<GenreRecyclerViewAdapter.GenreViewHolder>(){
 
 
@@ -18,12 +19,35 @@ class GenreRecyclerViewAdapter (private val genreList: List<GenreModel>) :
     override fun onBindViewHolder(holder: GenreViewHolder, position: Int) {
         val genre = genreList[position]
         holder.genreName.text = genre.name
+        holder.genreName.setOnClickListener{
+            listener.onGenreClick(genre.id)
+
+        }
+
+
     }
 
     override fun getItemCount(): Int {
        return genreList.size
     }
-    class GenreViewHolder( itemView: View): RecyclerView.ViewHolder(itemView){
+    inner class GenreViewHolder( itemView: View): RecyclerView.ViewHolder(itemView),View.OnClickListener{
+
         val genreName : TextView = itemView.findViewById(R.id.genre_name)
+
+        init{
+            itemView.setOnClickListener(this)
+        }
+
+       override fun onClick(v: View?) {
+          val position = adapterPosition
+           if( position != RecyclerView.NO_POSITION) {
+                listener.onGenreClick(position)
+
+           }
+        }
+    }
+    interface OnItemClickListener{
+        fun onGenreClick(position: Int)
+
     }
 }

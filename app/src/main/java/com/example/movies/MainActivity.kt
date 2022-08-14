@@ -1,9 +1,11 @@
 package com.example.movies
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.RecoverySystem
 import android.util.Log
+import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,8 +16,12 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import retrofit2.Response
+import androidx.annotation.NonNull
 
-class MainActivity : AppCompatActivity() {
+
+
+
+class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener ,MovieRecyclerViewAdapter.OnItemClickListener {
     private lateinit var genreList: ArrayList<GenreModel>
     private lateinit var genreRecyclerViewAdapter: GenreRecyclerViewAdapter
     private lateinit var genreRecyclerView: RecyclerView
@@ -23,18 +29,100 @@ class MainActivity : AppCompatActivity() {
     private lateinit var movieList: ArrayList<MovieModel>
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView
+    private lateinit var moviesInterface :MoviesInterface
+    private lateinit var gridLayoutManager :GridLayoutManager
 
-
+    var page = 1
+    var genreId = -1
+    val totalPages = 500
+    var isLoading = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         init()
 
+        // API
+        moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
 
         // get generes of movies
-        var moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
-        // launching a new coroutine
+        getGenres()
+
+        genreRecyclerViewAdapter = GenreRecyclerViewAdapter(genreList,this)
+        genreRecyclerView.adapter = genreRecyclerViewAdapter
+
+        // get Movies
+        getMovies()
+
+        movieRecyclerViewAdapter = MovieRecyclerViewAdapter(movieList,this,this)
+        movieRecyclerView.adapter = movieRecyclerViewAdapter
+
+        initScrollListener()
+
+
+    }
+
+    private fun init(){
+        genreRecyclerView = findViewById(R.id.genre_recyclerView)
+        genreRecyclerView.setHasFixedSize(true)
+        genreRecyclerView.layoutManager = LinearLayoutManager(this,RecyclerView.HORIZONTAL,false)
+        genreList = ArrayList()
+
+        movieRecyclerView = findViewById(R.id.movies_recyclerview)
+        movieRecyclerView.setHasFixedSize(true)
+        gridLayoutManager = GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false)
+        movieRecyclerView.layoutManager = gridLayoutManager
+        //movieRecyclerView.layoutManager = LinearLayoutManager(this)
+        movieList = ArrayList()
+
+    }
+
+    override fun onGenreClick(id: Int) {
+        genreId = id
+        page = 1
+        movieList.clear()
+        getMovies()
+        movieRecyclerViewAdapter.notifyDataSetChanged()
+
+    }
+
+    override fun onMovieClick(position: Int) {
+        val intent = Intent(this, MovieDetailsActivity::class.java)
+        intent.putExtra("movieName" ,movieList[position].title)
+        intent.putExtra("movieDesc" ,movieList[position].overview )
+        intent.putExtra("moviePoster" ,movieList[position].poster_path )
+        intent.putExtra("movieDate" ,movieList[position].release_date )
+
+        startActivity(intent)
+    }
+    fun initScrollListener(){
+        movieRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+            }
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (dy > 0) { //check for scroll down
+                    if (!isLoading) {
+                        //bottom of list!
+                        if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() == movieList.size - 1 && page < totalPages) {
+
+                            page++
+                            getMovies()
+                            isLoading = true
+                            Log.d("zatonaPage", "done page$page")
+                        }
+
+                    }
+
+
+
+                }
+            }
+        })
+
+    }
+
+    fun getGenres() {
         GlobalScope.launch(Dispatchers.Main) {
             val result = moviesInterface.getGenre()
             genreList.add(GenreModel(-1,"All"))
@@ -48,9 +136,18 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
+    }
+    fun getMovies(){
+
         GlobalScope.launch(Dispatchers.Main) {
             // get movies
-            val response = moviesInterface.getMovies()
+
+            var genre = genreId.toString() ;
+            if( genreId == -1){
+                genre = "="
+            }
+
+            val response = moviesInterface.getMovies(genre,page.toString())
             if (response != null) {
                 // Checking the results
                 val jsonObj = response.body()
@@ -68,39 +165,14 @@ class MainActivity : AppCompatActivity() {
                     val rate = movie.asJsonObject.get("vote_average").toString()
 
                     Log.d("zatona", name)
-                    movieList.add(MovieModel( id= id,title= name,release_date=date,overview=description,backdrop_path=mainImg,poster_path=posterImg,vote_average=rate ))
+                    movieList.add(MovieModel( id= id ,title= name,release_date=date,overview=description,backdrop_path=mainImg,poster_path=posterImg,vote_average=rate ))
 
                 }
                 movieRecyclerViewAdapter.notifyDataSetChanged()
+                isLoading = false
 
             }
         }
-
-        genreRecyclerViewAdapter = GenreRecyclerViewAdapter(genreList)
-        genreRecyclerView.adapter = genreRecyclerViewAdapter
-
-        movieRecyclerViewAdapter = MovieRecyclerViewAdapter(movieList,this)
-        movieRecyclerView.adapter = movieRecyclerViewAdapter
-
-
-
-
-    }
-
-    private fun init(){
-        genreRecyclerView = findViewById(R.id.genre_recyclerView)
-        genreRecyclerView.setHasFixedSize(true)
-        genreRecyclerView.layoutManager = LinearLayoutManager(this,RecyclerView.HORIZONTAL,false)
-        genreList = ArrayList()
-
-        movieRecyclerView = findViewById(R.id.movies_recyclerview)
-        movieRecyclerView.setHasFixedSize(true)
-       //movieRecyclerView.layoutManager = LinearLayoutManager(this)
-        movieRecyclerView.layoutManager = GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false)
-
-        movieList = ArrayList()
-
-
 
     }
 

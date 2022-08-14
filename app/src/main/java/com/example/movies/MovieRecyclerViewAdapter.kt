@@ -11,7 +11,7 @@ import com.bumptech.glide.Glide
 import com.squareup.picasso.Picasso
 import kotlin.coroutines.coroutineContext
 
-class MovieRecyclerViewAdapter(private val movieList: List<MovieModel> , private val context : Context) :
+class MovieRecyclerViewAdapter(private val movieList: List<MovieModel> , private val context : Context,private val listener : MovieRecyclerViewAdapter.OnItemClickListener) :
 RecyclerView.Adapter<MovieRecyclerViewAdapter.MoviesViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MoviesViewHolder {
@@ -26,18 +26,37 @@ RecyclerView.Adapter<MovieRecyclerViewAdapter.MoviesViewHolder>() {
         "//https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=0aeda53ab78b646d28c457d6abdeac6e"
        // https://play-lh.googleusercontent.com/dy1OYo2YklKN2AKL2QzSnz6to2sLly9uXzBEdDHt7saTDI6ErPVoSqTNL4MwlCR1waxe
         Picasso.get().load("https://image.tmdb.org/t/p/w500${movie.poster_path}").resize(135,170).into(holder.movieImage)
+
+        holder.movieImage.setOnClickListener{
+            listener.onMovieClick(position)
+
+        }
     }
 
     override fun getItemCount(): Int {
        return  movieList.size
     }
 
-     class MoviesViewHolder(var view: View):RecyclerView.ViewHolder(view){
+     inner class MoviesViewHolder( view: View):RecyclerView.ViewHolder(view),View.OnClickListener{
          val movieImage : ImageView = view.findViewById(R.id.movie_img_item)
          val movieName : TextView = itemView.findViewById(R.id.movie_name_item)
          val movieDate : TextView = itemView.findViewById(R.id.movie_date_item)
+         init{
+             view.setOnClickListener(this)
+         }
 
+         override fun onClick(v: View?) {
+             val position = adapterPosition
+             if( position != RecyclerView.NO_POSITION) {
+                 listener.onMovieClick(position)
+
+             }
+         }
 
      }
+    interface OnItemClickListener{
+        fun onMovieClick(position: Int)
+
+    }
 
 }
