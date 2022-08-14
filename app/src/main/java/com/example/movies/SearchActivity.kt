@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
@@ -39,8 +40,14 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
         query = searchET.text.toString()
 
         searchBtn.setOnClickListener(View.OnClickListener {
-            query = searchET.text.toString()
-            getMovies()
+            if(searchET.text == null){
+                Toast.makeText(this,"Search is Empty", Toast.LENGTH_SHORT)
+            }else {
+                query = searchET.text.toString()
+                movieList.clear()
+                getMovies()
+
+            }
 
         })
 
@@ -76,6 +83,7 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
         intent.putExtra("movieDesc" ,movieList[position].overview )
         intent.putExtra("moviePoster" ,movieList[position].poster_path )
         intent.putExtra("movieDate" ,movieList[position].release_date )
+        intent.putExtra("movieRate" ,movieList[position].vote_average )
 
         startActivity(intent)
     }
@@ -105,8 +113,6 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
 
         GlobalScope.launch(Dispatchers.Main) {
             // get movies
-
-
             val response = moviesInterface.getSearchMovies(query,page.toString())
             if (response != null) {
                 // Checking the results

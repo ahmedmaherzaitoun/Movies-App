@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,8 +43,12 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         searchBtn.setOnClickListener(View.OnClickListener {
 
             val intent = Intent(this, SearchActivity::class.java)
-            intent.putExtra("searchQuery" ,searchET.text.toString())
-            startActivity(intent)
+            if(searchET.text == null){
+                Toast.makeText(this,"Search is Empty",Toast.LENGTH_SHORT)
+            }else {
+                intent.putExtra("searchQuery", searchET.text.toString())
+                startActivity(intent)
+            }
         })
 
 
@@ -162,13 +167,13 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
                 val movieObj= gson.fromJson(jsonObj, MoviesJsonModel::class.java)
 
                 for (movie in movieObj.results) {
-                    val id = movie.asJsonObject.get("id").asInt
-                    val name = movie.asJsonObject.get("title").toString().substring(1,movie.asJsonObject.get("title").toString().length-1)
-                    val date = movie.asJsonObject.get("release_date").toString().substring(1,movie.asJsonObject.get("release_date").toString().length-1)
-                    val description = movie.asJsonObject.get("overview").toString().substring(1,movie.asJsonObject.get("overview").toString().length-1)
-                    val mainImg = movie.asJsonObject.get("backdrop_path").toString().substring(1,movie.asJsonObject.get("backdrop_path").toString().length-1)
-                    val posterImg = movie.asJsonObject.get("poster_path").toString().substring(1,movie.asJsonObject.get("poster_path").toString().length-1)
-                    val rate = movie.asJsonObject.get("vote_average").toString()
+                    val id = if(movie.asJsonObject.get("id") ==null) 1 else movie.asJsonObject.get("id").asInt
+                    val name =if(movie.asJsonObject.get("title") ==null) "" else movie.asJsonObject.get("title").toString().substring(1,movie.asJsonObject.get("title").toString().length-1)
+                    val date =if(movie.asJsonObject.get("release_date") ==null) "" else movie.asJsonObject.get("release_date").toString().substring(1,movie.asJsonObject.get("release_date").toString().length-1)
+                    val description =if(movie.asJsonObject.get("overview") ==null) "" else movie.asJsonObject.get("overview").toString().substring(1,movie.asJsonObject.get("overview").toString().length-1)
+                    val mainImg =if(movie.asJsonObject.get("backdrop_path") ==null) "" else movie.asJsonObject.get("backdrop_path").toString().substring(1,movie.asJsonObject.get("backdrop_path").toString().length-1)
+                    val posterImg =if(movie.asJsonObject.get("poster_path") ==null) "" else movie.asJsonObject.get("poster_path").toString().substring(1,movie.asJsonObject.get("poster_path").toString().length-1)
+                    val rate = if(movie.asJsonObject.get("vote_average") ==null) "" else movie.asJsonObject.get("vote_average").toString()
 
                     Log.d("zatona", name)
                     movieList.add(MovieModel( id= id ,title= name,release_date=date,overview=description,backdrop_path=mainImg,poster_path=posterImg,vote_average=rate ))
