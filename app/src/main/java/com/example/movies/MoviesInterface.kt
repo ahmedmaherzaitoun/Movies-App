@@ -10,5 +10,7 @@ interface MoviesInterface {
 
         @GET("discover/movie?api_key=0aeda53ab78b646d28c457d6abdeac6e")
         suspend fun getMovies(@Query("with_genres") genre_id:String,@Query("page") page:String) : Response<JsonObject>
+        @GET("search/movie?api_key=0aeda53ab78b646d28c457d6abdeac6e")
+        suspend fun getSearchMovies(@Query("query") genre_id:String,@Query("page") page:String) : Response<JsonObject>
 
 }

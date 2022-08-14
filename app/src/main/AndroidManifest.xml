@@ -12,9 +12,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Movies">
         <activity
-            android:name=".MovieDetailsActivity"
-            android:parentActivityName=".MainActivity"
+            android:name=".SearchActivity"
             android:exported="false" />
+        <activity
+            android:name=".MovieDetailsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

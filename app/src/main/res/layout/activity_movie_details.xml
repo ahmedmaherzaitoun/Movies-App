@@ -68,4 +68,32 @@
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/movie_poster_details" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="40dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="5dp"
+        android:text="Rate:"
+        android:textAllCaps="false"
+        android:textColor="#F8F8F8"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/movie_poster_details"
+        app:layout_constraintTop_toBottomOf="@+id/movie_date_details" />
+
+    <TextView
+        android:id="@+id/rate"
+        android:layout_width="160dp"
+        android:layout_height="26dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="5dp"
+        android:text="TextView"
+        android:textColor="#FFFCFC"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/textView2"
+        app:layout_constraintTop_toBottomOf="@+id/movie_date_details" />
 </androidx.constraintlayout.widget.ConstraintLayout>

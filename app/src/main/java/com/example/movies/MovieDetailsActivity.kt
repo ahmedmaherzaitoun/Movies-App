@@ -10,6 +10,8 @@ class MovieDetailsActivity : AppCompatActivity() {
     private lateinit var movieName :TextView
     private lateinit var movieDate :TextView
     private lateinit var movieDescription :TextView
+    private lateinit var movieRate :TextView
+
     private lateinit var moviePoster :ImageView
 
 
@@ -25,12 +27,15 @@ class MovieDetailsActivity : AppCompatActivity() {
         val  description = intent.getStringExtra("movieDesc")
         val  date  = intent.getStringExtra("movieDate")
         val  posterPath = intent.getStringExtra("moviePoster")
+        val  rate = intent.getStringExtra("movieRate")
+
         this.setTitle(name)
 
 
         movieName.text = name
         movieDate.text = date
         movieDescription.text = description
+        movieRate.text = rate
 
         moviePoster = findViewById(R.id.movie_poster_details)
 
@@ -41,6 +46,7 @@ class MovieDetailsActivity : AppCompatActivity() {
         movieName = findViewById(R.id.movie_name_details)
         movieDate = findViewById(R.id.movie_date_details)
         movieDescription = findViewById(R.id.description_details)
+        movieRate = findViewById(R.id.rate)
 
         moviePoster = findViewById(R.id.movie_poster_details)
 

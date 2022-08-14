@@ -9,13 +9,14 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.squareup.picasso.Picasso
+import java.util.*
 import kotlin.coroutines.coroutineContext
 
-class MovieRecyclerViewAdapter(private val movieList: List<MovieModel> , private val context : Context,private val listener : MovieRecyclerViewAdapter.OnItemClickListener) :
+class MovieRecyclerViewAdapter(private val movieList: List<MovieModel> , private val context : Context,private val listener : MovieRecyclerViewAdapter.OnItemClickListener,private val layout:Int) :
 RecyclerView.Adapter<MovieRecyclerViewAdapter.MoviesViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MoviesViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.movie_grid_layout,parent,false)
+        val view = LayoutInflater.from(parent.context).inflate(layout,parent,false)
         return MoviesViewHolder(view)
     }
 
