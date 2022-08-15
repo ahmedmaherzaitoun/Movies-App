@@ -7,12 +7,10 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import com.example.movies.pojo.MovieModel
 import com.squareup.picasso.Picasso
-import java.util.*
-import kotlin.coroutines.coroutineContext
 
-class MovieRecyclerViewAdapter(private val movieList: List<MovieModel> , private val context : Context,private val listener : MovieRecyclerViewAdapter.OnItemClickListener,private val layout:Int) :
+class MovieRecyclerViewAdapter(private val movieList: List<MovieModel>, private val context : Context, private val listener : MovieRecyclerViewAdapter.OnItemClickListener, private val layout:Int) :
 RecyclerView.Adapter<MovieRecyclerViewAdapter.MoviesViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MoviesViewHolder {

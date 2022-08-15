@@ -11,7 +11,6 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,14 +18,18 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlin.math.log
 import android.widget.TextView.OnEditorActionListener
+import com.example.movies.data.MoviesApiClient
+import com.example.movies.data.MoviesInterface
+import com.example.movies.pojo.MovieModel
+import com.example.movies.pojo.MoviesJsonModel
+import com.example.movies.ui.MovieDetailsActivity
 
 class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickListener {
     private lateinit var movieList: ArrayList<MovieModel>
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView
-    private lateinit var moviesInterface :MoviesInterface
+    private lateinit var moviesInterface : MoviesInterface
     private lateinit var gridLayoutManager : GridLayoutManager
     private lateinit var searchET: EditText
     private lateinit var searchBtn:Button
@@ -47,9 +50,9 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
         val colorDrawable = ColorDrawable(Color.parseColor("#eb8f2d"))
         actionBar!!.setBackgroundDrawable(colorDrawable)
 
-        init()
+        initComponent()
 
-
+        // get search query from mainActivity
         val intent = intent
         var searchQuery = intent.getStringExtra("searchQuery")
         searchET.setText(searchQuery)
@@ -57,13 +60,11 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
 
 
 
-
-
-
         searchBtn.setOnClickListener(View.OnClickListener {
             if(searchET.text == null){
                 Toast.makeText(this,"Search is Empty", Toast.LENGTH_SHORT)
-            }else if(!sharedPreferences.getBoolean("isConnected", false)){
+            }
+            else if(!sharedPreferences.getBoolean("isConnected", false)){
                 Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
             }else {
                 query = searchET.text.toString()
@@ -93,13 +94,10 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
             movieRecyclerView.adapter = movieRecyclerViewAdapter
 
             initScrollListener()
-
         }
-
-
     }
 
-    private fun init(){
+    private fun initComponent(){
         searchET = findViewById(R.id.search_et)
         searchBtn= findViewById(R.id.search_btn)
 
@@ -134,6 +132,7 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
 
         startActivity(intent)
     }
+
     fun initScrollListener(){
         if(sharedPreferences.getBoolean("isConnected", false)) {
             movieRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -148,9 +147,9 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
 
                             //bottom of list!
                             if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() == movieList.size - 1 && page < totalPages) {
-
                                 page++
                                 getMovies()
+                                movieRecyclerViewAdapter.notifyDataSetChanged()
                                 isLoading = true
                                 Log.d("zatonaPage", "done page$page")
                             }
@@ -160,6 +159,7 @@ class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickL
             })
         }
     }
+
     fun getMovies() {
         if (sharedPreferences.getBoolean("isConnected", false)) {
 

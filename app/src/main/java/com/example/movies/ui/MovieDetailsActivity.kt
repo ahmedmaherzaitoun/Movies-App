@@ -1,4 +1,4 @@
-package com.example.movies
+package com.example.movies.ui
 
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.TextView
+import com.example.movies.R
 import com.squareup.picasso.Picasso
 
 class MovieDetailsActivity : AppCompatActivity() {

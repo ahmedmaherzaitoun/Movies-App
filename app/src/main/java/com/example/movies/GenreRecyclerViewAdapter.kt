@@ -5,9 +5,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.movies.pojo.GenreModel
 
 class GenreRecyclerViewAdapter (private val genreList: List<GenreModel>,
-private val listener :OnItemClickListener) :
+                                private val listener :OnItemClickListener) :
     RecyclerView.Adapter<GenreRecyclerViewAdapter.GenreViewHolder>(){
 
 

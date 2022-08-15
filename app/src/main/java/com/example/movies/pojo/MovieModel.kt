@@ -1,4 +1,4 @@
-package com.example.movies
+package com.example.movies.pojo
 
 data class MovieModel (
     val id:Int ,

@@ -1,4 +1,4 @@
-package com.example.movies
+package com.example.movies.pojo
 
 import com.google.gson.JsonArray
 import org.json.JSONArray

@@ -1,4 +1,4 @@
-package com.example.movies
+package com.example.movies.ui
 
 
 import android.content.Intent
@@ -23,9 +23,17 @@ import kotlinx.coroutines.launch
 import android.graphics.drawable.ColorDrawable
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView.OnEditorActionListener
+import com.example.movies.*
+import com.example.movies.data.MoviesApiClient
+import com.example.movies.data.MoviesInterface
+import com.example.movies.pojo.GenreModel
+import com.example.movies.pojo.MovieModel
+import com.example.movies.pojo.MoviesJsonModel
 
 
-class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener ,MovieRecyclerViewAdapter.OnItemClickListener ,ConnectivityReceiver.ConnectivityReceiverListener {
+class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener,
+    MovieRecyclerViewAdapter.OnItemClickListener,
+    ConnectivityReceiver.ConnectivityReceiverListener {
     private lateinit var genreList: ArrayList<GenreModel>
     private lateinit var genreRecyclerViewAdapter: GenreRecyclerViewAdapter
     private lateinit var genreRecyclerView: RecyclerView
@@ -35,8 +43,9 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     private lateinit var movieList: ArrayList<MovieModel>
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView
-    private lateinit var moviesInterface :MoviesInterface
+    private lateinit var moviesInterface : MoviesInterface
     private lateinit var gridLayoutManager :GridLayoutManager
+
 
     var page = 1
     var genreId = -1
@@ -49,27 +58,20 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-//        val sharedPref = getSharedPreferences("isConnected", MODE_PRIVATE)
-//        val editor =sharedPref.edit()
-
-
+        // color actionBar
         val actionBar = supportActionBar
         val colorDrawable = ColorDrawable(Color.parseColor("#eb8f2d"))
         actionBar!!.setBackgroundDrawable(colorDrawable)
 
+
+        // connection of network
         registerReceiver(ConnectivityReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
 
-
-        //initial
-        init()
-
+        //initial component of ui
+        initComponent()
 
         // search by button and keyboard
         searchBtn.setOnClickListener(View.OnClickListener {
-//            editor.apply {
-//                putBoolean("isConnected",isConnected)
-//                apply()
-//            }
             search()
         })
 
@@ -83,7 +85,6 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         })
 
         if ( isConnected ) {
-
             // API
             moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
 
@@ -96,18 +97,16 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             // get Movies
             getMovies()
 
-            movieRecyclerViewAdapter =
-                MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
+
+            movieRecyclerViewAdapter = MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
             movieRecyclerView.adapter = movieRecyclerViewAdapter
+
             initScrollListener()
+
         }
-
-
-
-
     }
 
-    private fun init(){
+    private fun initComponent(){
          initComponent = true
 
         searchBtn = findViewById(R.id.search_btn_main)
@@ -122,16 +121,19 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         movieRecyclerView.setHasFixedSize(true)
         gridLayoutManager = GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false)
         movieRecyclerView.layoutManager = gridLayoutManager
+
         movieList = ArrayList()
 
     }
     fun search(){
 
         val intent = Intent(this, SearchActivity::class.java)
+
         if(searchET.text.length ==0){
             Toast.makeText(this,"Search text is Empty",Toast.LENGTH_SHORT).show()
-        }else if(!isConnected){
-            Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
+        }
+        else if(!isConnected){
+            Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
         }
         else {
             intent.putExtra("searchQuery", searchET.text.toString())
@@ -143,8 +145,8 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         genreId = id
         page = 1
         movieList.clear()
-        if( isConnected) {
-            getMovies()
+        if(isConnected) {
+             getMovies()
         }
         movieRecyclerViewAdapter.notifyDataSetChanged()
 
@@ -169,13 +171,15 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
                 super.onScrollStateChanged(recyclerView, newState)
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (dy > 0) { //check for scroll down
+                if (dy > 0) {
+                    //check for scroll down
                     if (!isLoading && isConnected) {
                         //bottom of list!
                         if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() == movieList.size - 1 && page < totalPages) {
-
                             page++
                             getMovies()
+                            movieRecyclerViewAdapter.notifyDataSetChanged()
+
                             isLoading = true
                             Log.d("zatonaPage", "done page$page")
                         }
@@ -201,6 +205,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
         }
     }
+
     fun getMovies(){
 
         GlobalScope.launch(Dispatchers.Main) {
@@ -212,7 +217,6 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
             val response = moviesInterface.getMovies(genre,page.toString())
             if (response != null) {
-                // Checking the results
                 val jsonObj = response.body()
 
                 val gson = Gson()
@@ -227,7 +231,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
                     val posterImg =if(movie.asJsonObject.get("poster_path") ==null) "" else movie.asJsonObject.get("poster_path").toString().substring(1,movie.asJsonObject.get("poster_path").toString().length-1)
                     val rate = if(movie.asJsonObject.get("vote_average") ==null) "" else "Rate: ${movie.asJsonObject.get("vote_average").toString()}"
 
-                    Log.d("zatona", name)
+                    Log.d("zatonaMovies", name)
                     movieList.add(MovieModel( id= id ,title= name,release_date=date,overview=description,backdrop_path=mainImg,poster_path=posterImg,vote_average=rate ))
 
                 }
@@ -243,6 +247,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         super.onResume()
         ConnectivityReceiver.connectivityReceiverListener = this
     }
+
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
         showNetworkMessage(isConnected)
     }
@@ -257,12 +262,13 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             apply()
         }
         Log.d("isConnected", "showNetworkMessage: $isConnected" )
+
         if (!isConnected) {
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
         }else if (initComponent){
 
             // API
-             moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
+            moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
 
             // get generes of movies
             getGenres()
@@ -272,11 +278,10 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
             // get Movies
             getMovies()
-
-            movieRecyclerViewAdapter =
-                MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
+            movieRecyclerViewAdapter = MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
             movieRecyclerView.adapter = movieRecyclerViewAdapter
             initScrollListener()
+
         }
     }
 }
