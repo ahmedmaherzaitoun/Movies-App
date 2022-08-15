@@ -1,5 +1,7 @@
 package com.example.movies
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ImageView
@@ -18,6 +20,10 @@ class MovieDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_movie_details)
+
+        val actionBar = supportActionBar
+        val colorDrawable = ColorDrawable(Color.parseColor("#eb8f2d"))
+        actionBar!!.setBackgroundDrawable(colorDrawable)
 
         init()
 

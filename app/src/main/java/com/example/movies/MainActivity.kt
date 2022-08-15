@@ -1,6 +1,11 @@
 package com.example.movies
 
+
 import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.Color
+import android.net.ConnectivityManager
+
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -15,9 +20,12 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import android.graphics.drawable.ColorDrawable
+import android.view.inputmethod.EditorInfo
+import android.widget.TextView.OnEditorActionListener
 
 
-class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener ,MovieRecyclerViewAdapter.OnItemClickListener {
+class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener ,MovieRecyclerViewAdapter.OnItemClickListener ,ConnectivityReceiver.ConnectivityReceiverListener {
     private lateinit var genreList: ArrayList<GenreModel>
     private lateinit var genreRecyclerViewAdapter: GenreRecyclerViewAdapter
     private lateinit var genreRecyclerView: RecyclerView
@@ -34,44 +42,73 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     var genreId = -1
     val totalPages = 500
     var isLoading = false
+    var isConnected = false
+    var initComponent = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+//        val sharedPref = getSharedPreferences("isConnected", MODE_PRIVATE)
+//        val editor =sharedPref.edit()
+
+
+        val actionBar = supportActionBar
+        val colorDrawable = ColorDrawable(Color.parseColor("#eb8f2d"))
+        actionBar!!.setBackgroundDrawable(colorDrawable)
+
+        registerReceiver(ConnectivityReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+
+
+        //initial
         init()
 
-        searchBtn.setOnClickListener(View.OnClickListener {
 
-            val intent = Intent(this, SearchActivity::class.java)
-            if(searchET.text == null){
-                Toast.makeText(this,"Search is Empty",Toast.LENGTH_SHORT)
-            }else {
-                intent.putExtra("searchQuery", searchET.text.toString())
-                startActivity(intent)
-            }
+        // search by button and keyboard
+        searchBtn.setOnClickListener(View.OnClickListener {
+//            editor.apply {
+//                putBoolean("isConnected",isConnected)
+//                apply()
+//            }
+            search()
         })
 
+        // search by press at keyboard
+        searchET.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                search()
+                return@OnEditorActionListener true
+            }
+            false
+        })
 
-        // API
-        moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
+        if ( isConnected ) {
 
-        // get generes of movies
-        getGenres()
+            // API
+            moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
 
-        genreRecyclerViewAdapter = GenreRecyclerViewAdapter(genreList,this)
-        genreRecyclerView.adapter = genreRecyclerViewAdapter
+            // get generes of movies
+            getGenres()
 
-        // get Movies
-        getMovies()
+            genreRecyclerViewAdapter = GenreRecyclerViewAdapter(genreList, this)
+            genreRecyclerView.adapter = genreRecyclerViewAdapter
 
-        movieRecyclerViewAdapter = MovieRecyclerViewAdapter(movieList,this,this,R.layout.movie_grid_layout)
-        movieRecyclerView.adapter = movieRecyclerViewAdapter
+            // get Movies
+            getMovies()
 
-        initScrollListener()
+            movieRecyclerViewAdapter =
+                MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
+            movieRecyclerView.adapter = movieRecyclerViewAdapter
+            initScrollListener()
+        }
+
+
+
 
     }
 
     private fun init(){
+         initComponent = true
 
         searchBtn = findViewById(R.id.search_btn_main)
         searchET = findViewById(R.id.search_et_main)
@@ -88,12 +125,27 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         movieList = ArrayList()
 
     }
+    fun search(){
+
+        val intent = Intent(this, SearchActivity::class.java)
+        if(searchET.text.length ==0){
+            Toast.makeText(this,"Search text is Empty",Toast.LENGTH_SHORT).show()
+        }else if(!isConnected){
+            Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
+        }
+        else {
+            intent.putExtra("searchQuery", searchET.text.toString())
+            startActivity(intent)
+        }
+    }
 
     override fun onGenreClick(id: Int) {
         genreId = id
         page = 1
         movieList.clear()
-        getMovies()
+        if( isConnected) {
+            getMovies()
+        }
         movieRecyclerViewAdapter.notifyDataSetChanged()
 
     }
@@ -118,7 +170,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 if (dy > 0) { //check for scroll down
-                    if (!isLoading) {
+                    if (!isLoading && isConnected) {
                         //bottom of list!
                         if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() == movieList.size - 1 && page < totalPages) {
 
@@ -173,7 +225,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
                     val description =if(movie.asJsonObject.get("overview") ==null) "" else movie.asJsonObject.get("overview").toString().substring(1,movie.asJsonObject.get("overview").toString().length-1)
                     val mainImg =if(movie.asJsonObject.get("backdrop_path") ==null) "" else movie.asJsonObject.get("backdrop_path").toString().substring(1,movie.asJsonObject.get("backdrop_path").toString().length-1)
                     val posterImg =if(movie.asJsonObject.get("poster_path") ==null) "" else movie.asJsonObject.get("poster_path").toString().substring(1,movie.asJsonObject.get("poster_path").toString().length-1)
-                    val rate = if(movie.asJsonObject.get("vote_average") ==null) "" else movie.asJsonObject.get("vote_average").toString()
+                    val rate = if(movie.asJsonObject.get("vote_average") ==null) "" else "Rate: ${movie.asJsonObject.get("vote_average").toString()}"
 
                     Log.d("zatona", name)
                     movieList.add(MovieModel( id= id ,title= name,release_date=date,overview=description,backdrop_path=mainImg,poster_path=posterImg,vote_average=rate ))
@@ -187,5 +239,44 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        ConnectivityReceiver.connectivityReceiverListener = this
+    }
+    override fun onNetworkConnectionChanged(isConnected: Boolean) {
+        showNetworkMessage(isConnected)
+    }
 
+    private fun showNetworkMessage(isConnected: Boolean) {
+        this.isConnected = isConnected
+
+        var sharedPref = getSharedPreferences("isConnected", MODE_PRIVATE)
+        var editor = sharedPref.edit()
+        editor.apply {
+            putBoolean("isConnected",isConnected)
+            apply()
+        }
+        Log.d("isConnected", "showNetworkMessage: $isConnected" )
+        if (!isConnected) {
+            Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
+        }else if (initComponent){
+
+            // API
+             moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
+
+            // get generes of movies
+            getGenres()
+
+            genreRecyclerViewAdapter = GenreRecyclerViewAdapter(genreList, this)
+            genreRecyclerView.adapter = genreRecyclerViewAdapter
+
+            // get Movies
+            getMovies()
+
+            movieRecyclerViewAdapter =
+                MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
+            movieRecyclerView.adapter = movieRecyclerViewAdapter
+            initScrollListener()
+        }
+    }
 }
