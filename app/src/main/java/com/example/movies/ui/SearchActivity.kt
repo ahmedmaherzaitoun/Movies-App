@@ -1,4 +1,4 @@
-package com.example.movies
+package com.example.movies.ui
 
 import android.content.Intent
 import android.content.SharedPreferences
@@ -19,13 +19,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import android.widget.TextView.OnEditorActionListener
+import com.example.movies.R
 import com.example.movies.data.MoviesApiClient
 import com.example.movies.data.MoviesInterface
 import com.example.movies.pojo.MovieModel
 import com.example.movies.pojo.MoviesJsonModel
-import com.example.movies.ui.MovieDetailsActivity
+import com.example.movies.ui.adapter.MovieRecyclerViewAdapter
 
-class SearchActivity : AppCompatActivity(),MovieRecyclerViewAdapter.OnItemClickListener {
+class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClickListener {
     private lateinit var movieList: ArrayList<MovieModel>
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView

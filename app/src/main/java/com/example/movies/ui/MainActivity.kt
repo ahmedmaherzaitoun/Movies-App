@@ -29,6 +29,8 @@ import com.example.movies.data.MoviesInterface
 import com.example.movies.pojo.GenreModel
 import com.example.movies.pojo.MovieModel
 import com.example.movies.pojo.MoviesJsonModel
+import com.example.movies.ui.adapter.GenreRecyclerViewAdapter
+import com.example.movies.ui.adapter.MovieRecyclerViewAdapter
 
 
 class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener,

@@ -1,4 +1,4 @@
-package com.example.movies
+package com.example.movies.ui.adapter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -7,10 +7,11 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.movies.R
 import com.example.movies.pojo.MovieModel
 import com.squareup.picasso.Picasso
 
-class MovieRecyclerViewAdapter(private val movieList: List<MovieModel>, private val context : Context, private val listener : MovieRecyclerViewAdapter.OnItemClickListener, private val layout:Int) :
+class MovieRecyclerViewAdapter(private val movieList: List<MovieModel>, private val context : Context, private val listener : OnItemClickListener, private val layout:Int) :
 RecyclerView.Adapter<MovieRecyclerViewAdapter.MoviesViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MoviesViewHolder {

@@ -1,14 +1,16 @@
-package com.example.movies
+package com.example.movies.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.movies.R
 import com.example.movies.pojo.GenreModel
 
 class GenreRecyclerViewAdapter (private val genreList: List<GenreModel>,
-                                private val listener :OnItemClickListener) :
+                                private val listener : OnItemClickListener
+) :
     RecyclerView.Adapter<GenreRecyclerViewAdapter.GenreViewHolder>(){
 
 
