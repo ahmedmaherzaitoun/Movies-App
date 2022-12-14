@@ -7,16 +7,21 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.movies.R
 import com.example.movies.pojo.GenreModel
+import com.example.movies.pojo.MovieModel
 
-class GenreRecyclerViewAdapter (private val genreList: List<GenreModel>,
+class GenreRecyclerViewAdapter (
                                 private val listener : OnItemClickListener
 ) :
     RecyclerView.Adapter<GenreRecyclerViewAdapter.GenreViewHolder>(){
 
-
+     private var genreList = mutableListOf<GenreModel>()
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GenreViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.genre_grid_layout,parent,false)
         return GenreViewHolder(view)
+    }
+    fun setGenresList(genres: List<GenreModel>) {
+        this.genreList = genres.toMutableList()
+        notifyDataSetChanged()
     }
 
     override fun onBindViewHolder(holder: GenreViewHolder, position: Int) {

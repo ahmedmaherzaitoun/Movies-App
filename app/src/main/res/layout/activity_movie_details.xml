@@ -9,8 +9,9 @@
 
     <ImageView
         android:id="@+id/movie_poster_details"
-        android:layout_width="200dp"
-        android:layout_height="300dp"
+        android:layout_width="250dp"
+        android:layout_height="380dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
@@ -20,14 +21,14 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="5dp"
+        android:gravity="center"
         android:text="TextView"
         android:textColor="#FFFFFF"
+        android:textSize="21sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/movie_poster_details"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/movie_poster_details" />
 
     <TextView
         android:id="@+id/movie_date_details"
@@ -35,12 +36,13 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="5dp"
+        android:gravity="center"
         android:text="TextView"
         android:textColor="#FFFFFF"
+        android:textSize="21sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/movie_poster_details"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/movie_name_details" />
 
     <TextView
@@ -48,26 +50,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
-        android:layout_marginTop="5dp"
         android:layout_marginEnd="5dp"
+        android:background="#28305C"
         android:text="TextView"
         android:textColor="#FFFFFF"
+        android:textSize="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="107dp"
-        android:layout_height="29dp"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="26dp"
-        android:text="Overview "
-        android:textColor="#FFEB3B"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/movie_poster_details" />
+        app:layout_constraintTop_toBottomOf="@+id/rate"
+        app:layout_constraintVertical_bias="0.035" />
 
     <TextView
         android:id="@+id/rate"
@@ -75,12 +68,12 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:layout_marginTop="8dp"
-        android:layout_marginEnd="5dp"
+        android:gravity="center"
         android:text="TextView"
-        android:textColor="#FFFCFC"
-        android:textSize="20sp"
+        android:textColor="#eb8f2d"
+        android:textSize="21sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/movie_poster_details"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/movie_date_details" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,37 +14,34 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import android.widget.TextView.OnEditorActionListener
+import androidx.activity.viewModels
 import com.example.movies.R
-import com.example.movies.data.MoviesApiClient
-import com.example.movies.data.MoviesInterface
-import com.example.movies.pojo.MovieModel
-import com.example.movies.pojo.MoviesJsonModel
 import com.example.movies.ui.adapter.MovieRecyclerViewAdapter
+import com.example.movies.ui.main.viewmodel.MainViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClickListener {
-    private lateinit var movieList: ArrayList<MovieModel>
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView
-    private lateinit var moviesInterface : MoviesInterface
     private lateinit var gridLayoutManager : GridLayoutManager
     private lateinit var searchET: EditText
     private lateinit var searchBtn:Button
     private lateinit var sharedPreferences: SharedPreferences
-
     var page = 1
     var query = ""
     val totalPages = 500
     var isLoading = false
     var isConnected = false
+    ///
+    ////
+    private val  viewModel : MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
+
         sharedPreferences = this.getSharedPreferences("isConnected", MODE_PRIVATE)
 
         val actionBar = supportActionBar
@@ -59,8 +56,6 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
         searchET.setText(searchQuery)
         query = searchET.text.toString()
 
-
-
         searchBtn.setOnClickListener(View.OnClickListener {
             if(searchET.text == null){
                 Toast.makeText(this,"Search is Empty", Toast.LENGTH_SHORT)
@@ -69,31 +64,28 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
                 Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
             }else {
                 query = searchET.text.toString()
-                movieList.clear()
-                getMovies()
-
+                search()
             }
+
 
         })
         searchET.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                query = searchET.text.toString()
                 search()
                 return@OnEditorActionListener true
             }
             false
         })
-
-
         if( sharedPreferences.getBoolean("isConnected", false) ) {
-            // API
-            moviesInterface = MoviesApiClient.getInstance().create(MoviesInterface::class.java)
-
-            getMovies()
-
-            movieRecyclerViewAdapter =
-                MovieRecyclerViewAdapter(movieList, this, this, R.layout.movie_grid_layout)
-            movieRecyclerView.adapter = movieRecyclerViewAdapter
-
+            viewModel.movieSearchList.observe(this) {
+                Log.d("mvvms shared1", movieRecyclerViewAdapter.differ.currentList.size.toString())
+                movieRecyclerViewAdapter.differ.submitList(it.toList())
+            }
+            viewModel.errorMessage.observe(this) {
+                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+            }
+            viewModel.getSearchMovies(query,page.toString())
             initScrollListener()
         }
     }
@@ -102,34 +94,42 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
         searchET = findViewById(R.id.search_et)
         searchBtn= findViewById(R.id.search_btn)
 
+
         movieRecyclerView = findViewById(R.id.movies_recyclerview_search)
         movieRecyclerView.setHasFixedSize(true)
         gridLayoutManager = GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false)
         movieRecyclerView.layoutManager = gridLayoutManager
-        movieList = ArrayList()
+
+
+        ///////////////
+
+        movieRecyclerViewAdapter =
+            MovieRecyclerViewAdapter(this, this, R.layout.movie_grid_layout)
+        movieRecyclerView.adapter = movieRecyclerViewAdapter
 
     }
-    fun search(){
-
-        if(searchET.text.length ==0){
+    private fun search(){
+        if(searchET.text.isEmpty()){
             Toast.makeText(this,"Search text is Empty",Toast.LENGTH_SHORT).show()
-        }else if(!isConnected){
-            Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
+        }else if(!sharedPreferences.getBoolean("isConnected", false)){
+            Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
         }
         else {
-            movieList.clear()
-            getMovies()
+            Log.d("mvvms search fun", movieRecyclerViewAdapter.differ.currentList.size.toString())
+            viewModel.searchMoviesBeforeHandling.clear()
+            viewModel.getSearchMovies(query,page.toString())
+
         }
     }
     override fun onMovieClick(position: Int) {
 
         val intent = Intent(this, MovieDetailsActivity::class.java)
 
-        intent.putExtra("movieName" ,movieList[position].title)
-        intent.putExtra("movieDesc" ,movieList[position].overview )
-        intent.putExtra("moviePoster" ,movieList[position].poster_path )
-        intent.putExtra("movieDate" ,movieList[position].release_date )
-        intent.putExtra("movieRate" ,movieList[position].vote_average )
+        intent.putExtra("movieName" ,movieRecyclerViewAdapter.differ.currentList[position].title)
+        intent.putExtra("movieDesc" ,movieRecyclerViewAdapter.differ.currentList[position].overview )
+        intent.putExtra("moviePoster" ,movieRecyclerViewAdapter.differ.currentList[position].poster_path )
+        intent.putExtra("movieDate" ,movieRecyclerViewAdapter.differ.currentList[position].release_date )
+        intent.putExtra("movieRate" ,movieRecyclerViewAdapter.differ.currentList[position].vote_average )
 
         startActivity(intent)
     }
@@ -143,101 +143,18 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
 
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     if (dy > 0) { //check for scroll down
-                        if (!isLoading && sharedPreferences.getBoolean("isConnected", false)) {
+                        if ( sharedPreferences.getBoolean("isConnected", false)) {
                             Log.d("isConnected", "initScrollListener: $isConnected" )
-
-                            //bottom of list!
-                            if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() == movieList.size - 1 && page < totalPages) {
+                            if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() ==movieRecyclerViewAdapter.itemCount-1 && page < totalPages) {
                                 page++
-                                getMovies()
-                                movieRecyclerViewAdapter.notifyDataSetChanged()
-                                isLoading = true
+                                viewModel.getSearchMovies(query,page.toString())
                                 Log.d("zatonaPage", "done page$page")
                             }
+
                         }
                     }
                 }
             })
         }
     }
-
-    fun getMovies() {
-        if (sharedPreferences.getBoolean("isConnected", false)) {
-
-            GlobalScope.launch(Dispatchers.Main) {
-                // get movies
-                val response = moviesInterface.getSearchMovies(query, page.toString())
-                if (response != null) {
-                    // Checking the results
-                    val jsonObj = response.body()
-
-                    val gson = Gson()
-                    val movieObj = gson.fromJson(jsonObj, MoviesJsonModel::class.java)
-
-                    for (movie in movieObj.results) {
-                        val id =
-                            if (movie.asJsonObject.get("id") == null) 1 else movie.asJsonObject.get(
-                                "id"
-                            ).asInt
-                        val name =
-                            if (movie.asJsonObject.get("title") == null) "" else movie.asJsonObject.get(
-                                "title"
-                            ).toString()
-                                .substring(1, movie.asJsonObject.get("title").toString().length - 1)
-                        val date =
-                            if (movie.asJsonObject.get("release_date") == null) "" else movie.asJsonObject.get(
-                                "release_date"
-                            ).toString().substring(
-                                1,
-                                movie.asJsonObject.get("release_date").toString().length - 1
-                            )
-                        val description =
-                            if (movie.asJsonObject.get("overview") == null) "" else movie.asJsonObject.get(
-                                "overview"
-                            ).toString().substring(
-                                1,
-                                movie.asJsonObject.get("overview").toString().length - 1
-                            )
-                        val mainImg =
-                            if (movie.asJsonObject.get("backdrop_path") == null) "" else movie.asJsonObject.get(
-                                "backdrop_path"
-                            ).toString().substring(
-                                1,
-                                movie.asJsonObject.get("backdrop_path").toString().length - 1
-                            )
-                        val posterImg =
-                            if (movie.asJsonObject.get("poster_path") == null) "" else movie.asJsonObject.get(
-                                "poster_path"
-                            ).toString().substring(
-                                1,
-                                movie.asJsonObject.get("poster_path").toString().length - 1
-                            )
-                        val rate =
-                            if (movie.asJsonObject.get("vote_average") == null) "" else "Rate: ${
-                                movie.asJsonObject.get("vote_average").toString()
-                            }"
-
-                        Log.d("zatona", name)
-                        movieList.add(
-                            MovieModel(
-                                id = id,
-                                title = name,
-                                release_date = date,
-                                overview = description,
-                                backdrop_path = mainImg,
-                                poster_path = posterImg,
-                                vote_average = rate
-                            )
-                        )
-
-                    }
-                    movieRecyclerViewAdapter.notifyDataSetChanged()
-                    isLoading = false
-
-                }
-            }
-
-        }
-    }
-
 }
