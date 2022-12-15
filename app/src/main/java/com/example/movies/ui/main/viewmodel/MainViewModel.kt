@@ -3,17 +3,14 @@ package com.example.movies.ui.main.viewmodel
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.*
-import com.example.movies.ConnectionLiveData
-import com.example.movies.pojo.GenreModel
-import com.example.movies.pojo.MovieModel
-import com.example.movies.pojo.MoviesJsonModel
-import com.example.movies.ui.main.MainActivity
-import com.example.movies.ui.main.repository.MainRepository
+import com.example.movies.model.GenreModel
+import com.example.movies.model.MovieModel
+import com.example.movies.model.MoviesJsonModel
+import com.example.movies.data.repository.MainRepository
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.broadcast
 import java.util.ArrayList
 import javax.inject.Inject
 @HiltViewModel

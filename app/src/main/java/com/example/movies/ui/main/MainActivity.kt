@@ -8,26 +8,19 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.provider.VoicemailContract.Status
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
+import android.widget.*
 import android.widget.TextView.OnEditorActionListener
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.movies.ConnectionLiveData
 import com.example.movies.ConnectivityReceiver
 import com.example.movies.R
-import com.example.movies.pojo.GenreModel
+import com.example.movies.model.GenreModel
 import com.example.movies.ui.MovieDetailsActivity
 import com.example.movies.ui.SearchActivity
 import com.example.movies.ui.adapter.GenreRecyclerViewAdapter
@@ -46,6 +39,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     private lateinit var searchET: EditText
     private lateinit var searchBtn: Button
     private lateinit var progressBar: ProgressBar
+    private lateinit var connectionTV: TextView
 
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView
@@ -62,12 +56,10 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     var initComponent = false
 
 
-    protected lateinit var connectionLiveData: ConnectionLiveData
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        connectionLiveData = ConnectionLiveData(this)
 
         // color actionBar
         val actionBar = supportActionBar
@@ -96,10 +88,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             }
             false
         })
-
-       //if (viewModel.isLoading.value == true) {
-          observeViewModel()
-       // }
+        observeViewModel()
     }
 
     private fun observeViewModel(){
@@ -139,7 +128,8 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
         movieRecyclerView = findViewById(R.id.movies_recyclerview)
         movieRecyclerView.setHasFixedSize(true)
-        gridLayoutManager = GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false)
+
+        gridLayoutManager = GridLayoutManager(this, 2, RecyclerView.VERTICAL, false)
         movieRecyclerView.layoutManager = gridLayoutManager
 
         //movie adapter
@@ -150,6 +140,9 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         // genres adapter
         genreRecyclerViewAdapter = GenreRecyclerViewAdapter(this)
         genreRecyclerView.adapter = genreRecyclerViewAdapter
+
+        progressBar = findViewById(R.id.main_progress_bar)
+        connectionTV = findViewById(R.id.connection_tv)
 
     }
     private fun search(){
@@ -205,15 +198,15 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 //manually calculating payout numbers for pagination
                 //check for scroll down
-                if (dy > 0 || (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE && dx <0 )) {
+                if (dy > 0 ) {
 
                     if (isConnected) {
                     //bottom of list!
-                    if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() ==movieRecyclerViewAdapter.itemCount-1 && page < totalPages) {
-                        page++
-                        viewModel.getMovies(genreId,page)
-                        Log.d("zatonaPage", "done page$page")
-                    }
+                        if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() == movieRecyclerViewAdapter.itemCount-1 && page < totalPages) {
+                            gridLayoutManager.isSmoothScrolling
+                            page++
+                            viewModel.getMovies(genreId,page)
+                        }
                     }
                 }
             }
@@ -223,14 +216,12 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     override fun onResume() {
         super.onResume()
         ConnectivityReceiver.connectivityReceiverListener = this
-
-
-
     }
 
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
         showNetworkMessage(isConnected)
     }
+
     private fun showNetworkMessage(isConnected: Boolean) {
         this.isConnected = isConnected
 
@@ -243,12 +234,24 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         Log.d("isConnected", "showNetworkMessage: $isConnected" )
 
         if (!isConnected ) {
+
+            progressBar.visibility = View.INVISIBLE
+
+            // movieList not empty
+            if (viewModel.isLoading.value != null) {
+                connectionTV.visibility = View.INVISIBLE
+            }
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
 
         }else if (initComponent) {
+
+            connectionTV.visibility = View.INVISIBLE
             viewModel.getGenres()
+
             if (viewModel.isLoading.value == null) {
                 viewModel.getMovies(genreId,page)
+            }else{
+                progressBar.visibility = View.INVISIBLE
             }
             observeViewModel()
         }

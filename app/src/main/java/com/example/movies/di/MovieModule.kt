@@ -1,6 +1,6 @@
 package com.example.movies.di
 
-import com.example.movies.api.MoviesInterface
+import com.example.movies.data.MoviesApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,11 +14,11 @@ import javax.inject.Singleton
 object MovieModule {
     @Singleton
     @Provides
-    fun getInstance(): MoviesInterface {
+    fun getInstance(): MoviesApi {
          val BASE_URL = "https://api.themoviedb.org/3/"
         val retrofit = Retrofit.Builder().baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-        return retrofit.create(MoviesInterface::class.java)
+        return retrofit.create(MoviesApi::class.java)
     }
 }

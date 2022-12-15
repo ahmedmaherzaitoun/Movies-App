@@ -6,8 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.movies.R
-import com.example.movies.pojo.GenreModel
-import com.example.movies.pojo.MovieModel
+import com.example.movies.model.GenreModel
 
 class GenreRecyclerViewAdapter (
                                 private val listener : OnItemClickListener

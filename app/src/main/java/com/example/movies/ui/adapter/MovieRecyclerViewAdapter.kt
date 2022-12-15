@@ -6,13 +6,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.movies.R
-import com.example.movies.pojo.MovieModel
+import com.example.movies.model.MovieModel
 import com.squareup.picasso.Picasso
 
 class MovieRecyclerViewAdapter( private val context : Context, private val listener : OnItemClickListener, private val layout:Int) :
