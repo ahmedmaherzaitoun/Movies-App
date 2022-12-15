@@ -3,14 +3,17 @@ package com.example.movies.ui.main.viewmodel
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.*
+import com.example.movies.ConnectionLiveData
 import com.example.movies.pojo.GenreModel
 import com.example.movies.pojo.MovieModel
 import com.example.movies.pojo.MoviesJsonModel
+import com.example.movies.ui.main.MainActivity
 import com.example.movies.ui.main.repository.MainRepository
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.broadcast
 import java.util.ArrayList
 import javax.inject.Inject
 @HiltViewModel
@@ -18,8 +21,8 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
 ): ViewModel() {
     val errorMessage = MutableLiveData<String>()
     val movieList =MutableLiveData<List<MovieModel>>()
-    val moviesBeforeHandling: ArrayList<MovieModel> = ArrayList()
-    val searchMoviesBeforeHandling: ArrayList<MovieModel> = ArrayList()
+    val moviesAfterHandling: ArrayList<MovieModel> = ArrayList()
+    val searchMoviesAfterHandling: ArrayList<MovieModel> = ArrayList()
 
     val movieSearchList =MutableLiveData<List<MovieModel>>()
 
@@ -31,12 +34,12 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
     val movies: LiveData<List<MovieModel>> get() = movieList
 
     init {
-        getMovies(-1,1)
-        getGenres()
+       // getMovies(-1,1)
+       // getGenres()
     }
 
 
-    val loading = MutableLiveData<Boolean>()
+    val isLoading = MutableLiveData<Boolean>()
     @SuppressLint("SuspiciousIndentation")
     fun getMovies(genreID:Int, page:Int) {
         var genre = genreID.toString() ;
@@ -44,16 +47,25 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
             genre = "="
         }
         this.page = page
-        job = CoroutineScope(Dispatchers.IO).launch {
+        job = CoroutineScope(Dispatchers.Main).launch {
             // get movies
+            Log.d("mvvmerror", "getMovies1")
+
             val response = repository.getMovies(genre, page.toString())
-                if (response.isSuccessful) {
-                    val jsonObj = response.body()
+            Log.d("mvvmerror", "getMovies2")
+
+            if (response.isSuccessful) {
+                Log.d("mvvmerror", "getMovies3")
+
+                val jsonObj = response.body()
                     if (jsonObj != null) {
                         movieList.postValue(handleJson(jsonObj))
+                        isLoading.postValue(true)
                     }
-
-            }
+                }else{
+                    Log.d("mvvmerror", "getMovies: ${onError(response.message())}")
+                    onCleared()
+                }
         }
     }
     fun getSearchMovies(query:String ,page:String) {
@@ -121,7 +133,7 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
 
             Log.d("mvvm", name + " " + page)
             if( isSearch){
-                searchMoviesBeforeHandling.add(
+                searchMoviesAfterHandling.add(
                     MovieModel(
                         id = id,
                         title = name,
@@ -133,7 +145,7 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
                     )
                 )
             }else{
-                moviesBeforeHandling.add(
+                moviesAfterHandling.add(
                     MovieModel(
                         id = id,
                         title = name,
@@ -149,9 +161,9 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
         }
         if(isSearch){
             isSearch = false
-            return searchMoviesBeforeHandling
+            return searchMoviesAfterHandling
         }
-        return moviesBeforeHandling
+        return moviesAfterHandling
     }
     fun getGenres() {
         job = CoroutineScope(Dispatchers.IO).launch {
@@ -170,7 +182,7 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
     }
     private fun onError(message: String) {
         errorMessage.value = message
-        loading.value = false
+        isLoading.value = false
     }
     override fun onCleared() {
         super.onCleared()

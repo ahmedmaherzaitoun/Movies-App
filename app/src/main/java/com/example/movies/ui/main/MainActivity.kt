@@ -8,23 +8,25 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.os.Parcelable
-import android.os.PersistableBundle
+import android.provider.VoicemailContract.Status
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView.OnEditorActionListener
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.movies.ConnectionLiveData
 import com.example.movies.ConnectivityReceiver
 import com.example.movies.R
-import com.example.movies.api.MoviesInterface
 import com.example.movies.pojo.GenreModel
 import com.example.movies.ui.MovieDetailsActivity
 import com.example.movies.ui.SearchActivity
@@ -43,12 +45,11 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     private lateinit var genreRecyclerView: RecyclerView
     private lateinit var searchET: EditText
     private lateinit var searchBtn: Button
+    private lateinit var progressBar: ProgressBar
 
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
     private lateinit var movieRecyclerView: RecyclerView
-    private lateinit var moviesInterface : MoviesInterface
     private lateinit var gridLayoutManager :GridLayoutManager
-    private lateinit var state: Parcelable
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -56,12 +57,17 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
     var genreId = -1
     val totalPages = 500
     var isLoading = false
+
     var isConnected = false
     var initComponent = false
+
+
+    protected lateinit var connectionLiveData: ConnectionLiveData
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        connectionLiveData = ConnectionLiveData(this)
 
         // color actionBar
         val actionBar = supportActionBar
@@ -70,7 +76,10 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
 
         // connection of network
-        registerReceiver(ConnectivityReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        registerReceiver(
+            ConnectivityReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
 
         initComponent()
 
@@ -87,32 +96,38 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             }
             false
         })
-        if(isConnected){
-            observeViewModel()
-        }
 
+       //if (viewModel.isLoading.value == true) {
+          observeViewModel()
+       // }
     }
-    private fun observeViewModel(){
 
-        viewModel.movieList.observe(this) {
+    private fun observeViewModel(){
+        if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE )
+        Log.d("inlandscape", "observeViewModel: ")
+
+        viewModel.movies.observe(this){
             Log.d("mvvm main movies", it.size.toString())
             movieRecyclerViewAdapter.differ.submitList(it.toList())
+           //movieRecyclerView.adapter = movieRecyclerViewAdapter
+
         }
         viewModel.genreList.observe(this) {
             Log.d("mvvm genres", it.size.toString())
             genreRecyclerViewAdapter.setGenresList(it)
-            genreRecyclerView.adapter = genreRecyclerViewAdapter
+            //genreRecyclerView.adapter = genreRecyclerViewAdapter
         }
         viewModel.errorMessage.observe(this) {
             Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
         }
         //movies
         initScrollListener()
-
     }
 
     private fun initComponent(){
         initComponent = true
+        if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE )
+        Log.d("inlandscape", "initComponent: ")
 
         searchBtn = findViewById(R.id.search_btn_main)
         searchET = findViewById(R.id.search_et_main)
@@ -158,7 +173,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         if(isConnected) {
             genreId = id
             page = 1
-            viewModel.moviesBeforeHandling.clear()
+            viewModel.moviesAfterHandling.clear()
             viewModel.getMovies(genreId,page)
         }else{
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
@@ -197,7 +212,6 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
                     if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() ==movieRecyclerViewAdapter.itemCount-1 && page < totalPages) {
                         page++
                         viewModel.getMovies(genreId,page)
-                        isLoading = true
                         Log.d("zatonaPage", "done page$page")
                     }
                     }
@@ -206,10 +220,11 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         })
     }
 
-
     override fun onResume() {
         super.onResume()
         ConnectivityReceiver.connectivityReceiverListener = this
+
+
 
     }
 
@@ -230,10 +245,14 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         if (!isConnected ) {
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
 
-        }else if (initComponent ){
+        }else if (initComponent) {
+            viewModel.getGenres()
+            if (viewModel.isLoading.value == null) {
+                viewModel.getMovies(genreId,page)
+            }
             observeViewModel()
-
         }
+
     }
 
 

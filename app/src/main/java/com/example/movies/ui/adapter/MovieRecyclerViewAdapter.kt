@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
@@ -63,6 +64,7 @@ RecyclerView.Adapter<MovieRecyclerViewAdapter.MoviesViewHolder>() {
          val movieImage : ImageView = view.findViewById(R.id.movie_img_item)
          val movieName : TextView = itemView.findViewById(R.id.movie_name_item)
          val movieDate : TextView = itemView.findViewById(R.id.movie_date_item)
+
          init{
              view.setOnClickListener(this)
          }

@@ -116,7 +116,7 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
         }
         else {
             Log.d("mvvms search fun", movieRecyclerViewAdapter.differ.currentList.size.toString())
-            viewModel.searchMoviesBeforeHandling.clear()
+            viewModel.searchMoviesAfterHandling.clear()
             viewModel.getSearchMovies(query,page.toString())
 
         }
