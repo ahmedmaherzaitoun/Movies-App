@@ -17,30 +17,32 @@ import androidx.recyclerview.widget.RecyclerView
 import android.widget.TextView.OnEditorActionListener
 import androidx.activity.viewModels
 import com.example.movies.R
+import com.example.movies.databinding.ActivityMainBinding
+import com.example.movies.databinding.ActivitySearchBinding
 import com.example.movies.ui.adapter.MovieRecyclerViewAdapter
 import com.example.movies.ui.main.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClickListener {
+    private lateinit var binding: ActivitySearchBinding
+
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
-    private lateinit var movieRecyclerView: RecyclerView
     private lateinit var gridLayoutManager : GridLayoutManager
-    private lateinit var searchET: EditText
-    private lateinit var searchBtn:Button
     private lateinit var sharedPreferences: SharedPreferences
-    var page = 1
-    var query = ""
-    val totalPages = 500
-    var isLoading = false
-    var isConnected = false
-    ///
+    private var page = 1
+    private var query = ""
+    private val totalPages = 500
+    private var isConnected = false
+
     ////
     private val  viewModel : MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_search)
+        binding = ActivitySearchBinding.inflate(layoutInflater)
+
+        setContentView(binding.root)
 
         sharedPreferences = this.getSharedPreferences("isConnected", MODE_PRIVATE)
 
@@ -53,71 +55,72 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
         // get search query from mainActivity
         val intent = intent
         var searchQuery = intent.getStringExtra("searchQuery")
-        searchET.setText(searchQuery)
-        query = searchET.text.toString()
+        binding.searchEt.setText(searchQuery)
+        query = binding.searchEt.text.toString()
 
-        searchBtn.setOnClickListener(View.OnClickListener {
-            if(searchET.text == null){
+        setSearchClick()
+        observeViewModel()
+        initScrollListener()
+
+    }
+    private fun observeViewModel() {
+        viewModel.observeSearchMovieListLiveData().observe(this) {
+            movieRecyclerViewAdapter.differ.submitList(it.toList())
+        }
+        viewModel.getErrorMessage().observe(this) {
+            Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
+        }
+        if( sharedPreferences.getBoolean("isConnected", false) ) {
+            if (viewModel.getSearchMoviesIsLoading().value == null) {
+                viewModel.getSearchMovies(query,page)
+            }
+        }
+    }
+    private fun setSearchClick(){
+
+        binding.searchBtn.setOnClickListener{
+            if(binding.searchEt.text == null){
                 Toast.makeText(this,"Search is Empty", Toast.LENGTH_SHORT)
             }
             else if(!sharedPreferences.getBoolean("isConnected", false)){
                 Toast.makeText(this, "No Internet Connection", Toast.LENGTH_SHORT).show()
             }else {
-                query = searchET.text.toString()
+                query = binding.searchEt.text.toString()
                 search()
             }
 
 
-        })
-        searchET.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+        }
+        binding.searchEt.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                query = searchET.text.toString()
+                query = binding.searchEt.text.toString()
                 search()
                 return@OnEditorActionListener true
             }
             false
         })
-        if( sharedPreferences.getBoolean("isConnected", false) ) {
-            viewModel.movieSearchList.observe(this) {
-                Log.d("mvvms shared1", movieRecyclerViewAdapter.differ.currentList.size.toString())
-                movieRecyclerViewAdapter.differ.submitList(it.toList())
-            }
-            viewModel.errorMessage.observe(this) {
-                Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
-            }
-            viewModel.getSearchMovies(query,page.toString())
-            initScrollListener()
-        }
     }
 
     private fun initComponent(){
-        searchET = findViewById(R.id.search_et)
-        searchBtn= findViewById(R.id.search_btn)
-
-
-        movieRecyclerView = findViewById(R.id.movies_recyclerview_search)
-        movieRecyclerView.setHasFixedSize(true)
+        binding.moviesRecyclerviewSearch.setHasFixedSize(true)
         gridLayoutManager = GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false)
-        movieRecyclerView.layoutManager = gridLayoutManager
-
-
-        ///////////////
+        binding.moviesRecyclerviewSearch.layoutManager = gridLayoutManager
 
         movieRecyclerViewAdapter =
             MovieRecyclerViewAdapter(this, this, R.layout.movie_grid_layout)
-        movieRecyclerView.adapter = movieRecyclerViewAdapter
+        binding.moviesRecyclerviewSearch.adapter = movieRecyclerViewAdapter
 
     }
     private fun search(){
-        if(searchET.text.isEmpty()){
+        if(binding.searchEt.text.isEmpty()){
             Toast.makeText(this,"Search text is Empty",Toast.LENGTH_SHORT).show()
         }else if(!sharedPreferences.getBoolean("isConnected", false)){
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
         }
         else {
-            Log.d("mvvms search fun", movieRecyclerViewAdapter.differ.currentList.size.toString())
-            viewModel.searchMoviesAfterHandling.clear()
-            viewModel.getSearchMovies(query,page.toString())
+            Log.d("mvvms search fun1", movieRecyclerViewAdapter.differ.currentList.size.toString())
+            viewModel.clearSearchMoviesAfterHandling()
+            viewModel.getSearchMovies(query,page)
 
         }
     }
@@ -134,9 +137,9 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
         startActivity(intent)
     }
 
-    fun initScrollListener(){
+    private fun initScrollListener(){
         if(sharedPreferences.getBoolean("isConnected", false)) {
-            movieRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            binding.moviesRecyclerviewSearch.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                     super.onScrollStateChanged(recyclerView, newState)
                 }
@@ -147,7 +150,7 @@ class SearchActivity : AppCompatActivity(), MovieRecyclerViewAdapter.OnItemClick
                             Log.d("isConnected", "initScrollListener: $isConnected" )
                             if (gridLayoutManager != null && gridLayoutManager.findLastCompletelyVisibleItemPosition() ==movieRecyclerViewAdapter.itemCount-1 && page < totalPages) {
                                 page++
-                                viewModel.getSearchMovies(query,page.toString())
+                                viewModel.getSearchMovies(query,page)
                                 Log.d("zatonaPage", "done page$page")
                             }
 

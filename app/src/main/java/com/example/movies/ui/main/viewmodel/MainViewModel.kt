@@ -30,13 +30,8 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
     private var page = 1
     private var isSearch = false
     private var job : Job? = null
-    private val isLoading = MutableLiveData<Boolean>()
-
-    init {
-       // getMovies(-1,1)
-       // getGenres()
-    }
-
+    private val moviesisLoading = MutableLiveData<Boolean>()
+    private val searchMoviesisLoading = MutableLiveData<Boolean>()
 
     @SuppressLint("SuspiciousIndentation")
     fun getMovies(genreID:Int, page:Int) {
@@ -57,8 +52,8 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
 
                 val jsonObj = response.body()
                     if (jsonObj != null) {
-                        movieList.postValue(handleEmptyValue(jsonObj))
-                        isLoading.postValue(true)
+                        movieList.postValue(handleValues(jsonObj))
+                        moviesisLoading.postValue(true)
                     }
                 }else{
                     Log.d("mvvmerror", "getMovies: ${onError(response.message())}")
@@ -66,7 +61,10 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
                 }
         }
     }
-    fun getSearchMovies(query:String ,page:String) {
+
+    fun getSearchMovies(query:String ,page:Int) {
+
+        val page = page.toString()
 
         job = CoroutineScope(Dispatchers.IO).launch {
                 // get movies
@@ -76,12 +74,14 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
                     val jsonObj = response.body()
                     if (jsonObj != null) {
                         isSearch = true
-                        movieSearchList.postValue(handleEmptyValue(jsonObj))
+                        movieSearchList.postValue(handleValues(jsonObj))
+                        searchMoviesisLoading.postValue(true)
                     }
                 }
             }
     }
-    private fun handleEmptyValue(jsonObj :JsonObject):ArrayList<MovieModel>{
+
+    private fun handleValues(jsonObj :JsonObject):ArrayList<MovieModel>{
         val gson = Gson()
         val movieObj = gson.fromJson(jsonObj, MoviesJsonModel::class.java)
         Log.d("mvvm movies handle" , "ana hena")
@@ -178,7 +178,9 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
     }
     private fun onError(message: String) {
         errorMessage.value = message
-        isLoading.value = false
+        moviesisLoading.value = false
+        searchMoviesisLoading.value = false
+
     }
     override fun onCleared() {
         super.onCleared()
@@ -189,19 +191,25 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
         return movieList
     }
     fun observeSearchMovieListLiveData():LiveData<List<MovieModel>>{
-        return movieList
+        return movieSearchList
     }
     fun observeGenreListLiveData():LiveData<List<GenreModel>>{
         return genreList
     }
-    fun getIsLoading():LiveData<Boolean>{
-        return isLoading
+    fun getMoviesListIsLoading():LiveData<Boolean>{
+        return moviesisLoading
+    }
+    fun getSearchMoviesIsLoading():LiveData<Boolean>{
+        return searchMoviesisLoading
     }
     fun getErrorMessage():LiveData<String>{
         return errorMessage
     }
     fun clearMoviesAfterHandling(){
         return moviesAfterHandling.clear()
+    }
+    fun clearSearchMoviesAfterHandling(){
+        return searchMoviesAfterHandling.clear()
     }
 
 

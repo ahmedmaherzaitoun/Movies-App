@@ -9,23 +9,23 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/movies_recyclerview_search"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_marginTop="5dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/search_et" />
+        app:layout_constraintStart_toEndOf="@+id/search_btn"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
         android:id="@+id/search_et"
-        android:layout_width="681dp"
-        android:layout_height="48dp"
+        android:layout_width="218dp"
+        android:layout_height="66dp"
         android:layout_marginStart="2dp"
         android:layout_marginTop="16dp"
-        android:imeOptions="actionSearch"
         android:ems="10"
         android:hint="Search"
+        android:imeOptions="actionSearch"
         android:inputType="textPersonName"
         android:textColor="#F6F6F6"
         android:textColorHint="#8E7979"
@@ -36,13 +36,11 @@
         android:id="@+id/search_btn"
         android:layout_width="48dp"
         android:layout_height="44dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="2dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="36dp"
         android:backgroundTint="#261D35"
         android:drawableBottom="@android:drawable/ic_menu_search"
         android:text="a"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.96"
         app:layout_constraintStart_toEndOf="@+id/search_et"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="TouchTargetSizeCheck" />

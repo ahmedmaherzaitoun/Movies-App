@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             binding.mainProgressBar.visibility = View.INVISIBLE
 
             // movieList not empty
-            if (viewModel.getIsLoading().value != null) {
+            if (viewModel.getMoviesListIsLoading().value != null) {
                 binding.connectionTv.visibility = View.INVISIBLE
             }
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
@@ -240,7 +240,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
             binding.connectionTv.visibility = View.INVISIBLE
             viewModel.getGenres()
 
-            if (viewModel.getIsLoading().value == null) {
+            if (viewModel.getMoviesListIsLoading().value == null) {
                 viewModel.getMovies(genreId,page)
             }else{
                 binding.mainProgressBar.visibility = View.INVISIBLE
