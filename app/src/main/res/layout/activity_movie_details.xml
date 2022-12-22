@@ -64,16 +64,15 @@
 
     <TextView
         android:id="@+id/rate"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginTop="4dp"
+        android:drawableStart="@drawable/ic_rate"
         android:gravity="center"
         android:text="TextView"
         android:textColor="#eb8f2d"
         android:textSize="21sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/movie_date_details" />
 </androidx.constraintlayout.widget.ConstraintLayout>

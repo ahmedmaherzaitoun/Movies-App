@@ -16,19 +16,21 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor (private val repository: MainRepository
 ): ViewModel() {
-    val errorMessage = MutableLiveData<String>()
-    val movieList =MutableLiveData<List<MovieModel>>()
-    val moviesAfterHandling: ArrayList<MovieModel> = ArrayList()
-    val searchMoviesAfterHandling: ArrayList<MovieModel> = ArrayList()
 
-    val movieSearchList =MutableLiveData<List<MovieModel>>()
 
-    val genreList =MutableLiveData<List<GenreModel>>()
-    var geners : ArrayList<GenreModel> = ArrayList()
-    var page = 1
-    var isSearch = false
-    var job : Job? = null
-    val movies: LiveData<List<MovieModel>> get() = movieList
+    private val errorMessage = MutableLiveData<String>()
+    private val movieList =MutableLiveData<List<MovieModel>>()
+    private val moviesAfterHandling: ArrayList<MovieModel> = ArrayList()
+    private val searchMoviesAfterHandling: ArrayList<MovieModel> = ArrayList()
+
+    private val movieSearchList =MutableLiveData<List<MovieModel>>()
+
+    private val genreList =MutableLiveData<List<GenreModel>>()
+    private var geners : ArrayList<GenreModel> = ArrayList()
+    private var page = 1
+    private var isSearch = false
+    private var job : Job? = null
+    private val isLoading = MutableLiveData<Boolean>()
 
     init {
        // getMovies(-1,1)
@@ -36,7 +38,6 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
     }
 
 
-    val isLoading = MutableLiveData<Boolean>()
     @SuppressLint("SuspiciousIndentation")
     fun getMovies(genreID:Int, page:Int) {
         var genre = genreID.toString() ;
@@ -56,7 +57,7 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
 
                 val jsonObj = response.body()
                     if (jsonObj != null) {
-                        movieList.postValue(handleJson(jsonObj))
+                        movieList.postValue(handleEmptyValue(jsonObj))
                         isLoading.postValue(true)
                     }
                 }else{
@@ -75,12 +76,12 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
                     val jsonObj = response.body()
                     if (jsonObj != null) {
                         isSearch = true
-                        movieSearchList.postValue(handleJson(jsonObj))
+                        movieSearchList.postValue(handleEmptyValue(jsonObj))
                     }
                 }
             }
     }
-    fun handleJson(jsonObj :JsonObject):ArrayList<MovieModel>{
+    private fun handleEmptyValue(jsonObj :JsonObject):ArrayList<MovieModel>{
         val gson = Gson()
         val movieObj = gson.fromJson(jsonObj, MoviesJsonModel::class.java)
         Log.d("mvvm movies handle" , "ana hena")
@@ -124,9 +125,7 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
                     movie.asJsonObject.get("poster_path").toString().length - 1
                 )
             val rate =
-                if (movie.asJsonObject.get("vote_average") == null) "" else "Rate: ${
-                    movie.asJsonObject.get("vote_average").toString()
-                }"
+                if (movie.asJsonObject.get("vote_average") == null) "" else movie.asJsonObject.get("vote_average").toString()
 
             Log.d("mvvm", name + " " + page)
             if( isSearch){
@@ -184,6 +183,25 @@ class MainViewModel @Inject constructor (private val repository: MainRepository
     override fun onCleared() {
         super.onCleared()
         job?.cancel()
+    }
+
+    fun observeMovieListLiveData():LiveData<List<MovieModel>>{
+        return movieList
+    }
+    fun observeSearchMovieListLiveData():LiveData<List<MovieModel>>{
+        return movieList
+    }
+    fun observeGenreListLiveData():LiveData<List<GenreModel>>{
+        return genreList
+    }
+    fun getIsLoading():LiveData<Boolean>{
+        return isLoading
+    }
+    fun getErrorMessage():LiveData<String>{
+        return errorMessage
+    }
+    fun clearMoviesAfterHandling(){
+        return moviesAfterHandling.clear()
     }
 
 

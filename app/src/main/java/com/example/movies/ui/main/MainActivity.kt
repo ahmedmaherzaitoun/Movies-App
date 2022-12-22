@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.movies.ConnectivityReceiver
 import com.example.movies.R
+import com.example.movies.databinding.ActivityMainBinding
 import com.example.movies.model.GenreModel
 import com.example.movies.ui.MovieDetailsActivity
 import com.example.movies.ui.SearchActivity
@@ -33,33 +34,26 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickListener,
     MovieRecyclerViewAdapter.OnItemClickListener,
     ConnectivityReceiver.ConnectivityReceiverListener {
+    private lateinit var binding: ActivityMainBinding
     private lateinit var genreList: ArrayList<GenreModel>
     private lateinit var genreRecyclerViewAdapter: GenreRecyclerViewAdapter
-    private lateinit var genreRecyclerView: RecyclerView
-    private lateinit var searchET: EditText
-    private lateinit var searchBtn: Button
-    private lateinit var progressBar: ProgressBar
-    private lateinit var connectionTV: TextView
-
     private lateinit var movieRecyclerViewAdapter: MovieRecyclerViewAdapter
-    private lateinit var movieRecyclerView: RecyclerView
     private lateinit var gridLayoutManager :GridLayoutManager
 
     private val viewModel: MainViewModel by viewModels()
 
-    var page = 1
-    var genreId = -1
-    val totalPages = 500
-    var isLoading = false
-
-    var isConnected = false
-    var initComponent = false
+    private var page = 1
+    private var genreId = -1
+    private val totalPages = 500
+    private  var isConnected = false
+    private var initComponent = false
 
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // color actionBar
         val actionBar = supportActionBar
@@ -67,46 +61,50 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         actionBar!!.setBackgroundDrawable(colorDrawable)
 
 
-        // connection of network
-        registerReceiver(
-            ConnectivityReceiver(),
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        )
-
+        checkInternetConnection()
         initComponent()
 
-        // search by button and keyboard
-        searchBtn.setOnClickListener(View.OnClickListener {
+        setSearchClick()
+
+        observeViewModel()
+    }
+
+    private fun setSearchClick(){
+
+        // search by button
+        binding.searchBtnMain.setOnClickListener(View.OnClickListener {
             search()
         })
-
         // search by press at keyboard
-        searchET.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
+        binding.searchEtMain.setOnEditorActionListener(OnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 search()
                 return@OnEditorActionListener true
             }
             false
         })
-        observeViewModel()
     }
-
+    private fun checkInternetConnection(){
+        // connection of network
+        registerReceiver(
+            ConnectivityReceiver(),
+            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        )
+    }
     private fun observeViewModel(){
         if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE )
         Log.d("inlandscape", "observeViewModel: ")
 
-        viewModel.movies.observe(this){
+        viewModel.observeMovieListLiveData().observe(this){
             Log.d("mvvm main movies", it.size.toString())
             movieRecyclerViewAdapter.differ.submitList(it.toList())
-           //movieRecyclerView.adapter = movieRecyclerViewAdapter
 
         }
-        viewModel.genreList.observe(this) {
+        viewModel.observeGenreListLiveData().observe(this) {
             Log.d("mvvm genres", it.size.toString())
             genreRecyclerViewAdapter.setGenresList(it)
-            //genreRecyclerView.adapter = genreRecyclerViewAdapter
         }
-        viewModel.errorMessage.observe(this) {
+        viewModel.getErrorMessage().observe(this) {
             Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
         }
         //movies
@@ -118,45 +116,39 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE )
         Log.d("inlandscape", "initComponent: ")
 
-        searchBtn = findViewById(R.id.search_btn_main)
-        searchET = findViewById(R.id.search_et_main)
-
-        genreRecyclerView = findViewById(R.id.genre_recyclerView)
-        genreRecyclerView.setHasFixedSize(true)
-        genreRecyclerView.layoutManager = LinearLayoutManager(this,RecyclerView.HORIZONTAL,false)
+        binding.genreRecyclerView.setHasFixedSize(true)
+        binding.genreRecyclerView.layoutManager = LinearLayoutManager(this,RecyclerView.HORIZONTAL,false)
         genreList = ArrayList()
 
-        movieRecyclerView = findViewById(R.id.movies_recyclerview)
-        movieRecyclerView.setHasFixedSize(true)
+        binding.moviesRecyclerview.setHasFixedSize(true)
 
         gridLayoutManager = GridLayoutManager(this, 2, RecyclerView.VERTICAL, false)
-        movieRecyclerView.layoutManager = gridLayoutManager
+        binding.moviesRecyclerview.layoutManager = gridLayoutManager
 
         //movie adapter
         movieRecyclerViewAdapter =
             MovieRecyclerViewAdapter(this, this, R.layout.movie_grid_layout)
-        movieRecyclerView.adapter = movieRecyclerViewAdapter
+        binding.moviesRecyclerview.adapter = movieRecyclerViewAdapter
 
         // genres adapter
         genreRecyclerViewAdapter = GenreRecyclerViewAdapter(this)
-        genreRecyclerView.adapter = genreRecyclerViewAdapter
+        binding.genreRecyclerView.adapter = genreRecyclerViewAdapter
 
-        progressBar = findViewById(R.id.main_progress_bar)
-        connectionTV = findViewById(R.id.connection_tv)
+
 
     }
     private fun search(){
 
         val intent = Intent(this, SearchActivity::class.java)
 
-        if(searchET.text.isEmpty()){
+        if(binding.searchEtMain.text.isEmpty()){
             Toast.makeText(this,"Search text is Empty",Toast.LENGTH_SHORT).show()
         }
         else if(!isConnected){
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
         }
         else {
-            intent.putExtra("searchQuery", searchET.text.toString())
+            intent.putExtra("searchQuery", binding.searchEtMain.text.toString())
             startActivity(intent)
         }
     }
@@ -166,7 +158,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
         if(isConnected) {
             genreId = id
             page = 1
-            viewModel.moviesAfterHandling.clear()
+            viewModel.clearMoviesAfterHandling()
             viewModel.getMovies(genreId,page)
         }else{
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
@@ -191,7 +183,7 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
     private fun initScrollListener(){
 
-        movieRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        binding.moviesRecyclerview.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
             }
@@ -235,23 +227,23 @@ class MainActivity : AppCompatActivity(), GenreRecyclerViewAdapter.OnItemClickLi
 
         if (!isConnected ) {
 
-            progressBar.visibility = View.INVISIBLE
+            binding.mainProgressBar.visibility = View.INVISIBLE
 
             // movieList not empty
-            if (viewModel.isLoading.value != null) {
-                connectionTV.visibility = View.INVISIBLE
+            if (viewModel.getIsLoading().value != null) {
+                binding.connectionTv.visibility = View.INVISIBLE
             }
             Toast.makeText(this, "You are offline", Toast.LENGTH_SHORT).show()
 
         }else if (initComponent) {
 
-            connectionTV.visibility = View.INVISIBLE
+            binding.connectionTv.visibility = View.INVISIBLE
             viewModel.getGenres()
 
-            if (viewModel.isLoading.value == null) {
+            if (viewModel.getIsLoading().value == null) {
                 viewModel.getMovies(genreId,page)
             }else{
-                progressBar.visibility = View.INVISIBLE
+                binding.mainProgressBar.visibility = View.INVISIBLE
             }
             observeViewModel()
         }
