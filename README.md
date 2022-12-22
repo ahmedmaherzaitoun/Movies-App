@@ -1,7 +1,7 @@
 
 # Movies App
 
-It's app get movies from api and can filtering by genre.In app can search by name movie. Movie Item clicked to details of this movie.
+It's app get movies from api and can filtering by genre. In app can search by name movie. Movie Item clicked to details of this movie.
 
 + MVVM Architecture
 + Hilt for dependency injection
